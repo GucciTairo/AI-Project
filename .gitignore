@@ -1,0 +1,14 @@
+# Ignore virtual environment
+env/
+
+# Ignore dataset folder
+DataSet/Chatbot/Dataset/Chatbot/
+
+# Ignore dataset images
+AboutModel/TraAI/Data/
+
+# Ignore model files
+AboutModel/TraAI/Model/TrainingModel/VGG16_TomatoDiseases.h5
+AboutModel/TraAI/Model/TrainingModelVGG16_TomatoDiseases.keras
+AboutModel/BEChatbot/VGG16_TomatoDiseases.h5
+AboutModel/BEChatbot/VGG16_TomatoDiseases.keras

@@ -1,0 +1,34 @@
+# requirements.txt
+
+#Core Web Framework 
+fastapi>=0.110.0 
+uvicorn[standard]>=0.29.0
+
+#Vector Database & Embeddings
+chromadb>=0.4.22
+sentence-transformers>=2.7.0
+
+#LLM Interaction & Orchestration
+langchain>=0.1.15
+
+# TensorFlow & Keras Stack
+tensorflow>=2.16.1,<2.17.0 # Stable as of Apr 2024
+
+# Keras 3 - Explicitly using standalone for clarity with its own mixed_precision
+keras>=3.0.0,<3.4.0      # Should align with TF's Keras 3 if possible, but this ensures we have Keras 3 API
+
+# tf-keras - Compatibility package for libraries like 'transformers'
+# Pin it closely to the TensorFlow version for best compatibility
+tf-keras>=2.16.0,<2.17.0
+
+#Image Model & Processing
+Pillow>=10.0.0
+python-multipart>=0.0.7 # For FastAPI file uploads
+
+#Core Dependencies
+numpy>=1.26.0
+pydantic>=2.0.0 # FastAPI's core
+
+#Commented out if not directly used by runtime backend 
+# pandas
+# opencv-python-headless

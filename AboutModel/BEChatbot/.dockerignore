@@ -1,0 +1,67 @@
+# .dockerignore
+
+#Python Virtual Environments
+env/
+.venv/
+*/env/
+*/.venv/
+
+#Python Cache & Compiled Files 
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+#Generated Data Stores (Mount these as volumes)
+# Assuming chroma_db_store lives inside AboutData based on previous context
+AboutData/chroma_db_store/
+# Add any other generated DB files like SQLite chat history if applicable
+*.db
+*.sqlite*
+
+#Source Datasets (Not needed in the running app image)
+DataSet/
+
+#Model Files (Mount if large or updated frequently)
+# Consider ignoring if your .keras model lives here and mount it
+AboutModel/
+
+#IDE and OS Specific Files
+.vscode/
+.idea/
+*.suo   
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+#Git Files
+.git/
+.gitignore
+.gitattributes
+
+#Test/Example Files (Adjust if needed)
+hello.py
+
+#Packaging & Versioning Files (If managed by requirements.txt)
+# If you manage dependencies SOLELY via requirements.txt, ignore these.
+# If using pyproject.toml + uv/poetry/etc., DO NOT ignore pyproject.toml
+# and potentially the lock file, and adjust Dockerfile accordingly.
+pyproject.toml
+uv.lock
+.python-version
+
+#Documentation
+README.md
+
+#Docker Files Themselves
+Dockerfile
+.dockerignore
+
+#Other potential build artifacts/logs
+dist/
+build/
+*.log
+*.egg-info/

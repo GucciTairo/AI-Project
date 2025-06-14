@@ -97,11 +97,11 @@ def predict_image_class(img: Image.Image) -> tuple[str | None, float | None]: #R
     try:
         logger.debug(f"Predicting with image model. Input shape: {processed_image.shape}, dtype: {processed_image.dtype}") #Check for the debug of image model. If the input shape and dtype format does not match the requirements
         prediction = image_model.predict(processed_image, verbose=0) #Calling model to predict the image already processed, using verbose = 0 to run silently
-        logger.debug(f"Raw prediction output: {prediction}") # Check for the raw prediction output
+        logger.debug(f"Raw prediction output: {prediction}") #Check for the raw prediction output
         predicted_class_index = np.argmax(prediction[0]) #With 3 classes of model training -> Which having highest score will be shown out, correspond to the predicted class
         confidence = float(np.max(prediction[0])) #Convert to standard python float
-        if 0 <= predicted_class_index < len(config.IMAGE_CLASS_NAMES):
-             predicted_class_name = config.IMAGE_CLASS_NAMES[predicted_class_index]
+        if 0 <= predicted_class_index < len(config.IMAGE_CLASS_NAMES): #Check for the predicted class index is within the bounds of the class names list
+             predicted_class_name = config.IMAGE_CLASS_NAMES[predicted_class_index] #Get the predicted class name from the config.IMAGE_CLASS_NAMES list
              logger.info(f"Image prediction successful: {predicted_class_name} ({confidence:.4f})")
              return predicted_class_name, confidence
         else:
@@ -120,7 +120,7 @@ def get_embedding(text: str) -> list[float] | None:
         logger.debug(f"Generating embedding for text (first 50 chars): '{text[:50]}...'")
         embedding_array = embedding_model.encode([text]) #Call the Sentence Transformer model to encode the text into an embedding vector
         #the input [text] is wrapped in a list
-        embedding_list = embedding_array[0].tolist() #Convert Numpy the array embedding into a standard Python list
+        embedding_list = embedding_array[0].tolist() #Convert Numpy the array embedding into a standard Python list [0.123,0.456,...,0.789] within 2D array 
         logger.debug(f"Embedding generated, dimension: {len(embedding_list)}")
         return embedding_list
     except Exception as e:

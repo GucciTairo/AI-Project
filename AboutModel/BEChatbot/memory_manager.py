@@ -12,12 +12,12 @@ session_memory_store: Dict[str, ConversationBufferWindowMemory] = {}
 
 def get_session_memory(session_id: str) -> ConversationBufferWindowMemory:
     """Gets or creates a ConversationBufferWindowMemory for the given session ID."""
-    if session_id not in session_memory_store:
+    if session_id not in session_memory_store: #Check for if already a memory object for this session
         session_memory_store[session_id] = ConversationBufferWindowMemory(
-            k=config.MEMORY_K,
+            k=config.MEMORY_K, #Set the windows size based on config, using 6 to keep the context relevant and concise
             return_messages=True # Return BaseMessage objects
         )
-        logging.info(f"Created new memory buffer for session: {session_id}")
+        logging.info(f"Created new memory buffer for session: {session_id}") #Logs when a new memory buffer is created
     return session_memory_store[session_id]
 
 def format_chat_history_for_prompt(messages: list[BaseMessage]) -> str:

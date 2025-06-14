@@ -1,6 +1,4 @@
 # chatbot_app.py
-# (Refined and Simplified Version)
-
 import logging
 import uuid
 import io
@@ -22,7 +20,7 @@ import memory_manager
 logging.basicConfig(level=config.LOGGING_LEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# --- FastAPI App & Startup Logic ---
+#FastAPI App & Startup Logic
 app = FastAPI(title="Tomato AI Chatbot", version="1.0.0")
 
 # CORS Middleware to allow frontend access
@@ -51,7 +49,7 @@ async def startup_event():
         logger.critical(f"CRITICAL STARTUP FAILURE: {e}", exc_info=True)
         # In a real production app, you might want to `raise SystemExit(e)` to stop startup.
 
-# --- Pydantic Models ---
+#Pydantic Models
 class ChatRequest(BaseModel):
     query: str
     session_id: str | None = None
@@ -65,7 +63,7 @@ class ImageAnalysisResponse(BaseModel):
     confidence: float | None = None
     error: str | None = None
 
-# --- API Endpoints ---
+#API Endpoints
 @app.get("/")
 async def root():
     return {"message": "Tomato AI Chatbot Backend (AgriBot) is running!"}
@@ -106,7 +104,7 @@ async def chat_endpoint(request: ChatRequest):
 
     database.add_message(session_id=session_id, sender='user', message=full_query)
 
-    # --- Step 1: Refine RAG Search Query for Better Context ---
+    #Step 1: Refine RAG Search Query for Better Context
     rag_search_query = full_query
     match = re.search(r"Image analysis identified: ([\w\s.-]+)", full_query, re.IGNORECASE)
     if match:
@@ -127,7 +125,7 @@ async def chat_endpoint(request: ChatRequest):
         rag_search_query = f"{detected_intent} of {disease}"
         logger.info(f"Refined RAG search query to: '{rag_search_query}'")
 
-    # --- Step 2: Retrieve Context using Refined Query ---
+    #Step 2: Retrieve Context using Refined Query
     context_for_prompt = "No relevant information found in my knowledge base."
     try:
         query_embedding = ai_models.get_embedding(rag_search_query)
@@ -146,7 +144,7 @@ async def chat_endpoint(request: ChatRequest):
         logger.error(f"Error querying ChromaDB: {e}", exc_info=True)
         # Continue with default context, LLM will handle it.
 
-    # --- Step 3: Get History and Construct Final Prompt ---
+    #Step 3: Get History and Construct Final Prompt
     memory = memory_manager.get_session_memory(session_id)
     raw_history_messages = memory.chat_memory.messages
     history_lines = [f"{'User' if msg.type == 'human' else 'AI'}: {msg.content}" for msg in raw_history_messages]
@@ -175,7 +173,7 @@ USER QUESTION:
 ASSISTANT ANSWER:"""
     logger.debug(f"SENDING PROMPT TO OLLAMA (Session: {session_id}):\n{prompt}")
 
-    # --- 4. Call LLM ---
+    #4. Call LLM
     try:
         async with httpx.AsyncClient() as client:
             payload = {
@@ -198,10 +196,10 @@ ASSISTANT ANSWER:"""
         logger.error(f"Unexpected error during LLM call: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred while thinking.")
     
-    # --- 5. Update Memory & DB ---
+    #5. Update Memory & DB
     if "sorry" not in ai_response_text.lower() and "error" not in ai_response_text.lower():
         database.add_message(session_id=session_id, sender='ai', message=ai_response_text)
         memory_manager.update_memory(session_id, full_query, ai_response_text)
 
-    # --- 6. Return Response ---
+    #6. Return Response
     return ChatResponse(response=ai_response_text, session_id=session_id)

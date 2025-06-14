@@ -57,13 +57,11 @@ We can add, update, query, or delete embeddings from a collection.
 
 [Embedding Models for Effective Retrieval-Augmented Generation](https://medium.com/bright-ai/choosing-the-right-embedding-for-rag-in-generative-ai-applications-8cf5b36472e1)  
 
-## 2. Memory Manager 
-
-## 3. Building Chatbot
+## 2. Building Chatbot
 
 ### a. Building for GenAI + TraAI
     
-    #GenAI
+    #### GenAI
     - Config.py:
         - Contains configuration settings for the chatbot.
         - [Includes API keys, model names, and other parameters](https://dev.to/jayantaadhikary/using-the-ollama-api-to-run-llms-and-generate-responses-locally-18b7) 
@@ -78,8 +76,8 @@ We can add, update, query, or delete embeddings from a collection.
         ** MEMORY_K = 6**  
             - Remember last 6 response in chathistory.db  
     
-    - AI_models.py: 
-        With 5 main function to handle for GenAI and TraAI in chatbot  
+    - AI_models.py:  
+        - With 5 main function to handle for GenAI and TraAI in chatbot  
             - def load_embedding_model(): load the embedding model (all-MiniLM-L6-v2 from config.py) for converting text to vectors.  
             - def load_image_model(): load the image model (Tomato VGG16) for predict diseases using Keras,..  
             - def preprocesss_image(): handle image preprocessing for the image model with required 224x224 and float32 to predict the class name  
@@ -87,25 +85,41 @@ We can add, update, query, or delete embeddings from a collection.
             - def get_embedding(): convert text to embedding using the loaded embedding model  
     
     - chatbot_app.py:  
+    
     - database.py: Using SQL to store our chat history of user and AI responses in chathistory.db  
         - def init_db(): initialize the SQLite database and create the chat_history table if it doesn't exist.  
         - def add_message(): add a new message to the chat history table.  
     
-    - memory_manager.py:  
+    - memory_manager.py: using for managing the conversation history(memory) for different chat sessions. We use LangChain's ConversationBufferWindowMemory to keep track of the last N messages in the conversation.  
+        - Follow this instruction to code for ConversationBufferWindowMemory: https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html, https://github.com/langchain-ai/langchain/discussions/10075
+        - def get_session_memory():  
+            - This function retrieves the conversation memory for a specific session ID.  
+            - If the session does not exist, it creates a new memory instance with a specified window size (MEMORY_K).  
+        - def get_session_memory(session_id: str) -> ConversationBufferWindowMemory:  
+            - This function retrieves the conversation memory for a specific session ID.  
+            - If the session does not exist, it creates a new memory instance with a specified window size (MEMORY_K).  
+        - def format_chat_history_for_prompt(): 
+            - This function formats the chat history for the prompt sent to the LLM.  
+            - It retrieves the session memory and formats it into a string that includes both user and AI messages.  
+            - The formatted chat history is then returned as a string, which can be used in the prompt for the LLM.  
+        - def update_memory:  
+            - This function updates the conversation memory with a new user message and the AI's response.  
+            - It adds the user message to the session memory and then appends the AI's response to the chat history.  
+            - The updated chat history is returned as a string, which can be used in subsequent prompts.  
 
-    #TraAI  
+    #### TraAI  
     All on report here: https://docs.google.com/document/d/1n5ivWsCn20Qrk995mFfOthLH91hnT3iMn0nq6cgZYI0/edit?pli=1&tab=t.0  
     After training model with file .keras. Our team use it and run with API for the model  
 
-    #Docker:  
+    #### Docker:  
         - Using file requirement.txt to install all the required packages for the chatbot.  
         - Using file Dockerfile to build the docker image for the chatbot.  
     
 
-    #DataSet:  
+    #### DataSet:  
         - CSV files containing the knowledge base for the chatbot. Our team building it from gathering data from Internet
         - Images for training the image model to detect diseases. You guy can get it from here: https://www.kaggle.com/datasets/cookiefinder/tomato-disease-multiple-sources  
         - Here is our dataset after modifying for 224x224 and uint8 + with the dataset for RAG of chatbot: 
     
-    #Building for web UI:
+    #### Building for web UI:
         - html, script,style

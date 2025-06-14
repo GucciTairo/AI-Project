@@ -110,7 +110,7 @@ def predict_image_class(img: Image.Image) -> tuple[str | None, float | None]: #R
     except Exception as e:
         logger.error(f"Error during image prediction with Keras model: {e}", exc_info=True)
         return None, None
-
+#This function using to convert text into numerical vector(embeddings) - power for RAG search
 def get_embedding(text: str) -> list[float] | None:
     logger = logging.getLogger(__name__)
     if embedding_model is None:
@@ -118,8 +118,9 @@ def get_embedding(text: str) -> list[float] | None:
         return None
     try:
         logger.debug(f"Generating embedding for text (first 50 chars): '{text[:50]}...'")
-        embedding_array = embedding_model.encode([text])
-        embedding_list = embedding_array[0].tolist()
+        embedding_array = embedding_model.encode([text]) #Call the Sentence Transformer model to encode the text into an embedding vector
+        #the input [text] is wrapped in a list
+        embedding_list = embedding_array[0].tolist() #Convert Numpy the array embedding into a standard Python list
         logger.debug(f"Embedding generated, dimension: {len(embedding_list)}")
         return embedding_list
     except Exception as e:

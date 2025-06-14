@@ -1,5 +1,3 @@
-# AI Project Notes
-
 ## 1. ChromaDB
 
 ### a. ChromaDB usage in our project
@@ -60,20 +58,19 @@ We can add, update, query, or delete embeddings from a collection.
 ## 2. Building Chatbot
 
 ### a. Building for GenAI + TraAI
-    
     #### GenAI
     - Config.py:
         - Contains configuration settings for the chatbot.
         - [Includes API keys, model names, and other parameters](https://dev.to/jayantaadhikary/using-the-ollama-api-to-run-llms-and-generate-responses-locally-18b7) 
         
         - Other settings:  
-        ** N_RESULTS = 3**  
+        N_RESULTS = 3
             - When a user asks a question,our application converts that question into an embedding (a numerical vector).  
             - This query embedding is then sent to ChromaDB.  
             - ChromaDB compares the query embedding to all the document embeddings stored in your tomato_chatbot_knowledge collection.  
             - It finds the documents whose embeddings are most semantically similar (closest in vector space) to the query embedding.  
             - N_RESULTS = 3 tells ChromaDB to return the top 3 most similar documents.  
-        ** MEMORY_K = 6**  
+        MEMORY_K = 6
             - Remember last 6 response in chathistory.db  
     
     - AI_models.py:  
@@ -82,9 +79,10 @@ We can add, update, query, or delete embeddings from a collection.
             - def load_image_model(): load the image model (Tomato VGG16) for predict diseases using Keras,..  
             - def preprocesss_image(): handle image preprocessing for the image model with required 224x224 and float32 to predict the class name  
             - def predict_image_class(): calling image_model.predict() to detect diseases  
-            - def get_embedding(): convert text to embedding using the loaded embedding model  
+            - def get_embedding(): convert text to embedding using the loaded embedding model: https://www.geeksforgeeks.org/nlp/text-embeddings-using-openai/  
     
-    - chatbot_app.py:  
+    - chatbot_app.py:  We using API endpoint to handle the chatbot's functionality.  
+        - 
     
     - database.py: Using SQL to store our chat history of user and AI responses in chathistory.db  
         - def init_db(): initialize the SQLite database and create the chat_history table if it doesn't exist.  

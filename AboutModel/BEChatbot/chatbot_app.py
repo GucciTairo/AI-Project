@@ -1,14 +1,14 @@
 # chatbot_app.py
-import logging
-import uuid
+import logging #logging DEBUG INFO WARNING
+import uuid #uuid for session ID generation
 import io
 import re
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel
-from PIL import Image, UnidentifiedImageError
+from fastapi import FastAPI, HTTPException, UploadFile, File #Using FastAPI to create chatbot
+from pydantic import BaseModel 
+from PIL import Image, UnidentifiedImageError #Use for image processing
 import httpx
 import chromadb
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware #allow chatbot to run on different port
 
 # Import custom modules
 import config
@@ -47,7 +47,6 @@ async def startup_event():
         # database.init_db() is called when its module is first imported.
     except Exception as e:
         logger.critical(f"CRITICAL STARTUP FAILURE: {e}", exc_info=True)
-        # In a real production app, you might want to `raise SystemExit(e)` to stop startup.
 
 #Pydantic Models
 class ChatRequest(BaseModel):
@@ -69,20 +68,20 @@ async def root():
     return {"message": "Tomato AI Chatbot Backend (AgriBot) is running!"}
 
 
-@app.post("/analyze_image", response_model=ImageAnalysisResponse)
+@app.post("/analyze_image", response_model=ImageAnalysisResponse) #This function retrieves upload images from user to predict the tomato diseases using Keras model
 async def analyze_image_endpoint(file: UploadFile = File(...)):
     """Receives an image and uses the trained Keras model to predict the disease."""
     logger.info(f"Received request for image analysis: {file.filename}")
-    if not ai_models.image_model:
+    if not ai_models.image_model: #Check the image_model is loaded
          logger.warning("Image analysis requested but model not loaded.")
-         return ImageAnalysisResponse(error="Image analysis model is not available.")
+         return ImageAnalysisResponse(error="Can't use the model.")
     try:
         contents = await file.read()
         if not contents:
             return ImageAnalysisResponse(error="Received empty file.")
 
         img = Image.open(io.BytesIO(contents))
-        disease, confidence = ai_models.predict_image_class(img)
+        disease, confidence = ai_models.predict_image_class(img) #Call model to make the prediction of diseases 
 
         if disease is not None:
             return ImageAnalysisResponse(disease=disease, confidence=confidence)
@@ -95,6 +94,7 @@ async def analyze_image_endpoint(file: UploadFile = File(...)):
         return ImageAnalysisResponse(error="An unexpected server error occurred.")
 
 
+#Heart of our chatbot. Handle user queries, perform RAG, call the LLM and return the AI's response
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """Handles chat logic: targeted RAG search, prompt construction, and LLM call."""
@@ -102,13 +102,13 @@ async def chat_endpoint(request: ChatRequest):
     full_query = request.query # The text from the frontend (may include image analysis prefix)
     logger.info(f"Chat request for session {session_id}: '{full_query[:200]}...'")
 
-    database.add_message(session_id=session_id, sender='user', message=full_query)
+    database.add_message(session_id=session_id, sender='user', message=full_query) #add user query to the database
 
-    #Step 1: Refine RAG Search Query for Better Context
-    rag_search_query = full_query
-    match = re.search(r"Image analysis identified: ([\w\s.-]+)", full_query, re.IGNORECASE)
-    if match:
-        disease = match.group(1).strip()
+    #Refine RAG Search Query for Better Context
+    rag_search_query = full_query # Default to the full query if no image analysis prefix is found
+    match = re.search(r"Image analysis identified: ([\w\s.-]+)", full_query, re.IGNORECASE) #tries to find if the full_query contains a previous image analysis
+    if match: # If the query contains an image analysis prefix, match the disease name inside RAG search query
+        disease = match.group(1).strip() # Extract the disease name from the image analysis prefix
         user_text_part = full_query.split("User query:")[-1].strip().lower()
         
         # Make the RAG search query more specific based on user's intent keywords
@@ -121,19 +121,19 @@ async def chat_endpoint(request: ChatRequest):
             if key in user_text_part:
                 detected_intent = value
                 break
-        
+        #Construct more targeted rag_search_query
         rag_search_query = f"{detected_intent} of {disease}"
         logger.info(f"Refined RAG search query to: '{rag_search_query}'")
 
-    #Step 2: Retrieve Context using Refined Query
+    #Retrieve Context using Refined Query
     context_for_prompt = "No relevant information found in my knowledge base."
     try:
-        query_embedding = ai_models.get_embedding(rag_search_query)
-        if query_embedding:
+        query_embedding = ai_models.get_embedding(rag_search_query) #Calling ai_models.get_embedding to convert text into numerical vector that embedding in my chromaDB vector to find the most relevant documents 
+        if query_embedding:  #Check if embedding was successfully generated
             results = knowledge_collection.query(
                 query_embeddings=[query_embedding],
                 n_results=config.N_RESULTS
-            )
+            ) #Provides the embedding of search query and number of results to retrieve
             if results and results.get('documents') and results['documents'][0]:
                 context_for_prompt = "\n---\n".join(results['documents'][0])
                 logger.info(f"Retrieved {len(results['documents'][0])} documents for RAG context.")
@@ -144,7 +144,7 @@ async def chat_endpoint(request: ChatRequest):
         logger.error(f"Error querying ChromaDB: {e}", exc_info=True)
         # Continue with default context, LLM will handle it.
 
-    #Step 3: Get History and Construct Final Prompt
+    #Get History and Construct Final Prompt
     memory = memory_manager.get_session_memory(session_id)
     raw_history_messages = memory.chat_memory.messages
     history_lines = [f"{'User' if msg.type == 'human' else 'AI'}: {msg.content}" for msg in raw_history_messages]
@@ -173,7 +173,7 @@ USER QUESTION:
 ASSISTANT ANSWER:"""
     logger.debug(f"SENDING PROMPT TO OLLAMA (Session: {session_id}):\n{prompt}")
 
-    #4. Call LLM
+    #Call LLM
     try:
         async with httpx.AsyncClient() as client:
             payload = {
@@ -196,10 +196,10 @@ ASSISTANT ANSWER:"""
         logger.error(f"Unexpected error during LLM call: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred while thinking.")
     
-    #5. Update Memory & DB
+    #Update Memory & DB
     if "sorry" not in ai_response_text.lower() and "error" not in ai_response_text.lower():
         database.add_message(session_id=session_id, sender='ai', message=ai_response_text)
         memory_manager.update_memory(session_id, full_query, ai_response_text)
 
-    #6. Return Response
+    #Return Response
     return ChatResponse(response=ai_response_text, session_id=session_id)

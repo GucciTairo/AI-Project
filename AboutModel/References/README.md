@@ -117,7 +117,7 @@ We can add, update, query, or delete embeddings from a collection.
     #### DataSet:  
         - CSV files containing the knowledge base for the chatbot. Our team building it from gathering data from Internet
         - Images for training the image model to detect diseases. You guy can get it from here: https://www.kaggle.com/datasets/cookiefinder/tomato-disease-multiple-sources  
-        - Here is our dataset after modifying for 224x224 and uint8 + with the dataset for RAG of chatbot: 
+        - Here is our dataset after modifying for 224x224 and uint8 + with the dataset for RAG of chatbot: https://www.kaggle.com/datasets/tairoooo/aiproject  
     
     #### Building for web UI:
         - html, script,style

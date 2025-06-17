@@ -12,6 +12,7 @@ IMAGE_MODEL_PATH = os.path.join(BASE_DIR, "VGG16_TomatoDiseases.keras") #Path to
 #Purpose: The ai_models.py module will use this name to load the correct model 
 EMBEDDING_MODEL_NAME = 'all-MiniLM-L6-v2' #Embedding model
 OLLAMA_MODEL_NAME = "phi" # Ensure this model is available in Ollama
+OLLAMA_TEMPERATURE = 0.5
 
 #Define the class names for the image classification model, must be in the same order as the training labels.
 IMAGE_CLASS_NAMES = [

@@ -99,7 +99,7 @@ async def analyze_image_endpoint(file: UploadFile = File(...)):
 async def chat_endpoint(request: ChatRequest):
     """Handles chat logic: targeted RAG search, prompt construction, and LLM call."""
     session_id = request.session_id or str(uuid.uuid4())
-    full_query = request.query # The text from the frontend (may include image analysis prefix)
+    full_query = request.query # The text from the frontend
     logger.info(f"Chat request for session {session_id}: '{full_query[:200]}...'")
 
     database.add_message(session_id=session_id, sender='user', message=full_query) #add user query to the database
@@ -134,7 +134,7 @@ async def chat_endpoint(request: ChatRequest):
         "adios": "Goodbye",
         "talk to you later": "Goodbye", 
 
-        "thanks": "Acknowledgement",   # Assuming you have/will add an "Acknowledgement" intent in Coms.csv or a RAG doc
+        "thanks": "Acknowledgement",   
         "thank you": "Acknowledgement",
 
         # Meta queries mapped to Coms.csv intents
@@ -216,20 +216,20 @@ async def chat_endpoint(request: ChatRequest):
             rag_search_query = detected_intent
         elif detected_intent_type == "disease_info":
             extracted_disease_canonical_name = None
-            # Check if disease context is already present (e.g., from image analysis)
-            if disease_context_present:
-                extracted_disease_canonical_name = disease # 'disease' is from image analysis
+            # Check if disease context is already present
+            if disease_context_present: #Extracted disease from image analysis
+                extracted_disease_canonical_name = disease
             else:
-                # Try to extract disease from text
+                # Try to extract disease from text if no image attach with the query
                 for disease_key_text, canonical_name in known_disease_names_map.items():
                     if disease_key_text in user_text_lower:
                         extracted_disease_canonical_name = canonical_name
                         break 
             
-            if extracted_disease_canonical_name:
+            if extracted_disease_canonical_name: #Handle for image +text of user
                 # Form query like "Symptomps of Tomato Bacterial Spot"
-                rag_search_query = f"{detected_intent} of {extracted_disease_canonical_name}"
-            else: # No specific disease identified from text or image for this disease_info intent
+                rag_search_query = f"{detected_intent} of {extracted_disease_canonical_name}" 
+            else: # No specific disease identified from text or image for this disease_info intent -> Provide general information
                 logger.info(f"Disease intent '{detected_intent}' detected without a specific disease. Forming a general RAG query.")
                 natural_intent_term = detected_intent.lower().replace('_', ' ') # e.g., "Symptomps" -> "symptomps"
                 rag_search_query = f"general information about {natural_intent_term} for tomato plants"
@@ -341,13 +341,13 @@ ASSISTANT ANSWER:"""
     try:
         async with httpx.AsyncClient() as client:
             payload = {
-                "model": config.OLLAMA_MODEL_NAME, # Ensure this is correct from your config
+                "model": config.OLLAMA_MODEL_NAME, 
                 "prompt": prompt,
                 "stream": False,
                 "options": { "temperature": config.OLLAMA_TEMPERATURE } # Use temperature from config
             }
             response = await client.post(config.OLLAMA_API_URL, json=payload, timeout=60.0)
-            response.raise_for_status() # Will raise an HTTPStatusError for 4xx/5xx responses
+            response.raise_for_status()
             response_data = response.json()
             ai_response_text = response_data.get("response", "Sorry, I received an empty response from the AI.").strip()
 
@@ -361,7 +361,7 @@ ASSISTANT ANSWER:"""
             
             # Heuristic: Only attempt stripping if the response is reasonably long.
             # Adjust the length threshold as needed.
-            if len(ai_response_text) > 75: # Example threshold
+            if len(ai_response_text) > 75: 
                 current_text_to_check = ai_response_text
                 earliest_unwanted_index = len(current_text_to_check) # Start with the end
 
@@ -402,8 +402,8 @@ ASSISTANT ANSWER:"""
         "AgriBot's brain had a hiccup", 
         "trouble connecting to my knowledge base", 
         "unexpected error occurred while I was thinking",
-        "received an empty response from the AI", # from default .get()
-        "could not process your request at this moment" # from initial default
+        "received an empty response from the AI",
+        "could not process your request at this moment"
     ]):
         memory_manager.update_memory(session_id, full_query, ai_response_text)
     else:
